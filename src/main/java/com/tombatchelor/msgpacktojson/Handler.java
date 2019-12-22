@@ -58,7 +58,7 @@ public class Handler implements HttpHandler {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("https://collect.observe-staging.com/v1/observations/datadog"))
                 .POST(HttpRequest.BodyPublishers.ofString(json))
-                .header("Authorization", "Bearer 126338107931 JK6HJfeT73p9Ltz97HZghI5ii8VOVPoD")
+                .header("Authorization", "Bearer CUSTOMER_ID ACCESS_TOKEN")
                 .header("Content-Type", "application/json")
                 .build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
