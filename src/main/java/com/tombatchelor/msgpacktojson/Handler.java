@@ -16,14 +16,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import org.msgpack.core.ExtensionTypeHeader;
-import org.msgpack.core.MessageFormat;
-import org.msgpack.core.MessageUnpacker;
 import org.msgpack.jackson.dataformat.MessagePackFactory;
-import org.msgpack.value.ValueType;
 
 /**
  *
@@ -31,6 +25,17 @@ import org.msgpack.value.ValueType;
  */
 public class Handler implements HttpHandler {
 
+    public static final String CUSTOMER_ID_KEY = "CUSTOMER_ID";
+    public static final String AUTH_TOKEN_KEY = "AUTH_TOKEN";
+    
+    public static String bearerString;
+    
+    static {
+        String customerID = System.getenv().get(CUSTOMER_ID_KEY);
+        String authToken = System.getenv().get(AUTH_TOKEN_KEY);
+        bearerString = "Bearer " + customerID + " " + authToken;
+    }
+            
     @Override
     public void handle(HttpExchange exchange) {
         try {
@@ -38,6 +43,7 @@ public class Handler implements HttpHandler {
             InputStream is = exchange.getRequestBody();
             ObjectMapper msgPackObjectMapper = new ObjectMapper(new MessagePackFactory());
             List<Object> payload = msgPackObjectMapper.readValue(is, new TypeReference<List<Object>>() {});
+            is.close();
             ObjectMapper objectMapper = new ObjectMapper();
             try {
                 String json = objectMapper.writeValueAsString(payload.get(0));
@@ -45,6 +51,11 @@ public class Handler implements HttpHandler {
             } catch (JsonProcessingException | InterruptedException e) {
                 e.printStackTrace();
             }
+            
+            
+            String body = "{\"OK\":\"OK\"}";
+            exchange.sendResponseHeaders(200, body.length() == 0 ? -1 : body.length());
+            exchange.getResponseBody().write(body.getBytes());
             exchange.close();
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -58,7 +69,7 @@ public class Handler implements HttpHandler {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("https://collect.observe-staging.com/v1/observations/datadog"))
                 .POST(HttpRequest.BodyPublishers.ofString(json))
-                .header("Authorization", "Bearer CUSTOMER_ID ACCESS_TOKEN")
+                .header("Authorization", bearerString)
                 .header("Content-Type", "application/json")
                 .build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());

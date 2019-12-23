@@ -1,0 +1,38 @@
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: msgpack
+spec:
+  selector:
+    matchLabels:
+      app: msgpack
+  replicas: 1 # tells deployment to run 2 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: msgpack
+    spec:
+      containers:
+      - name: msgpack
+        image: tombatchelor/msgpack:0.1
+        imagePullPolicy: Always
+        ports:
+        - name: msgpackport
+          containerPort: 4541
+      env:
+      - name: CUSTOMER_ID
+        value: XXX_CUSTOMER_ID
+      - name: AUTH_TOKEN
+        value: XXX_AUTH_TOKEN
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: msgpack
+spec:
+  selector:
+    app: msgpack
+  ports:
+  - protocol: TCP
+    port: 4541
+    targetPort: msgpackport
